@@ -6,7 +6,7 @@ export class NetfirewallStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
     new InspectionVpcStack(this, 'InspectionVpc');
-    new SpokeVpc(this, "SpokeVpcA");
+    //new SpokeVpc(this, "SpokeVpcA");
     //new SpokeVpc(this, "SpokeVpcB");
     //new SpokeVpc(this, "SpokeVpcC");
   }
@@ -18,7 +18,7 @@ class InspectionVpcStack extends cdk.NestedStack {
 
     const inspectionVpc = new ec2.Vpc(this, 'InspectionVpcStack', {
       cidr: "10.0.0.0/16",
-      maxAzs: 3,
+      maxAzs: this.availabilityZones.length,
       subnetConfiguration: [
         {
           cidrMask: 24,
