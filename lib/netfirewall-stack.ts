@@ -1,6 +1,6 @@
 import * as cdk from '@aws-cdk/core';
 import * as ec2 from '@aws-cdk/aws-ec2';
-import { AmazonLinuxImage, InstanceType } from '@aws-cdk/aws-ec2';
+import { AmazonLinuxImage, InstanceType, Peer } from '@aws-cdk/aws-ec2';
 import * as networkfirewall from '@aws-cdk/aws-networkfirewall';
 
 export class NetfirewallStack extends cdk.Stack {
@@ -67,10 +67,35 @@ class InspectionVpcStack extends cdk.NestedStack {
     });
 
     // Create Instances in Public & Private Subnets
-    new ec2.Instance(this, 'Instance', {
+
+    const sgAllowSSH = new ec2.SecurityGroup(this, 'sg-allow-ssh', {
+      vpc: inspectionVpc,
+      allowAllOutbound: true,
+      description: 'Allow ssh access'
+    });
+
+    sgAllowSSH.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(22));
+
+    new ec2.Instance(this, 'Public_Instance', {
       vpc: inspectionVpc,
       instanceType: new InstanceType('t2.micro'), 
-      machineImage: new AmazonLinuxImage
+      machineImage: new AmazonLinuxImage,
+      securityGroup: sgAllowSSH,
+      keyName: 'prod-ap-southeast-2-keypair',
+      vpcSubnets: inspectionVpc.selectSubnets({
+        subnetType: ec2.SubnetType.PUBLIC
+      })
+    });
+
+    new ec2.Instance(this, 'Protected_Instance', {
+      vpc: inspectionVpc,
+      instanceType: new InstanceType('t2.micro'), 
+      machineImage: new AmazonLinuxImage,
+      securityGroup: sgAllowSSH,
+      keyName: 'prod-ap-southeast-2-keypair',
+      vpcSubnets: inspectionVpc.selectSubnets({
+        subnetType: ec2.SubnetType.PRIVATE_ISOLATED
+      })
     });
   }
 }
