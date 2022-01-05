@@ -49,6 +49,12 @@ class InspectionVpcStack extends cdk.NestedStack {
       firewallPolicyName: 'netFirewallPolicy',
     });
 
+    const netFirewallStatefulRg = new networkfirewall.CfnRuleGroup(this, 'netFirewallStatefulRg', {
+      ruleGroupName: 'netfirewall stateful rule group',
+      type: 'STATEFUL',
+      capacity: 30000
+    });
+
     const inspectionSubnets = inspectionVpc.selectSubnets({
       subnetType: ec2.SubnetType.PRIVATE_WITH_NAT
     });
