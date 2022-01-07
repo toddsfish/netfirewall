@@ -18,6 +18,8 @@ class InspectionVpcStack extends cdk.NestedStack {
     super(scope, id, props);
 
     // Create VPC and Subnets
+    console.log('Across these AZs')
+    console.log(this.availabilityZones);
     const inspectionVpc = new ec2.Vpc(this, 'InspectionVpcStack', {
       cidr: "10.0.0.0/16",
       maxAzs: this.availabilityZones.length,
@@ -50,9 +52,14 @@ class InspectionVpcStack extends cdk.NestedStack {
     });
 
     const netFirewallStatefulRg = new networkfirewall.CfnRuleGroup(this, 'netFirewallStatefulRg', {
-      ruleGroupName: 'netfirewall stateful rule group',
+      ruleGroupName: 'netFirewallStatefulRg',
       type: 'STATEFUL',
-      capacity: 30000
+      capacity: 30000,
+      ruleGroup: {
+        rulesSource: {
+          rulesString: 'pass http $HOME_NET any -> $EXTERNAL_NET 80 (http.host; dotprefix; content:"blog.toddaas.com"; endswith; msg:"Allowed HTTP domain"; priority:1; sid:1; rev:1;)\ndrop tcp $HOME_NET any -> $EXTERNAL_NET 80 (msg:"Drop established non-HTTP to TCP:80"; flow: from_client,established; sid:2; priority:5; rev:1;)\ndrop tcp 10.0.0.0/16 any -> 10.0.0.0/16 22 (msg:"Drop SSH"; sid:3; priority:6; rev:1;)'
+        }
+      }
     });
 
     const inspectionSubnets = inspectionVpc.selectSubnets({
@@ -87,7 +94,7 @@ class InspectionVpcStack extends cdk.NestedStack {
       instanceType: new InstanceType('t2.micro'), 
       machineImage: new AmazonLinuxImage,
       securityGroup: sgAllowSSH,
-      keyName: 'prod-ap-southeast-2-keypair',
+      keyName: 'prod-' + this.region + '-keypair',
       vpcSubnets: inspectionVpc.selectSubnets({
         subnetType: ec2.SubnetType.PUBLIC
       })
@@ -98,7 +105,7 @@ class InspectionVpcStack extends cdk.NestedStack {
       instanceType: new InstanceType('t2.micro'), 
       machineImage: new AmazonLinuxImage,
       securityGroup: sgAllowSSH,
-      keyName: 'prod-ap-southeast-2-keypair',
+      keyName: 'prod-' + this.region + '-keypair',
       vpcSubnets: inspectionVpc.selectSubnets({
         subnetType: ec2.SubnetType.PRIVATE_ISOLATED
       })
