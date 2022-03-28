@@ -64,6 +64,9 @@ class InspectionVpcStack extends cdk.NestedStack {
       ruleGroup: {
         rulesSource: {
           rulesString: 'pass tls $HOME_NET any -> $EXTERNAL_NET 443 (msg:\"Pass TLS\"; sid:100200; rev:147;)\npass tcp $HOME_NET any <> $EXTERNAL_NET 443 (flow:not_established; sid:200200; rev:147;)\npass udp $HOME_NET any <> $EXTERNAL_NET 123 (sid:300200; rev:147;)'
+        },
+        statefulRuleOptions: {
+          ruleOrder: 'STRICT_ORDER'
         }
       }
     });
