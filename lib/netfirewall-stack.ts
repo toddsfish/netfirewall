@@ -46,7 +46,13 @@ class InspectionVpcStack extends cdk.NestedStack {
     const netFirewallPolicy = new networkfirewall.CfnFirewallPolicy(this, 'netFirewallPolicy', {
       firewallPolicy: {
         statelessDefaultActions: ['aws:forward_to_sfe'],
-        statelessFragmentDefaultActions: ['aws:forward_to_sfe']
+        statelessFragmentDefaultActions: ['aws:forward_to_sfe'], 
+        statefulEngineOptions: {  
+          // Adjust to DEFAULT_ACTION_ORDER (DEFAULT_ACTION_ORDER is the default behavior.) | STRICT_ORDER rules evaluated by order of priority, starting from the lowest number, and the rules in each rule group are processed in the order in which they're defined.
+          ruleOrder: 'STRICT_ORDER'
+        },
+        // The stateful default action is optional, and is only valid when using the strict rule order.
+        statefulDefaultActions: ['aws:drop_established']
       },
       firewallPolicyName: 'netFirewallPolicy',
     });
@@ -57,7 +63,7 @@ class InspectionVpcStack extends cdk.NestedStack {
       capacity: 30000,
       ruleGroup: {
         rulesSource: {
-          rulesString: 'pass http $HOME_NET any -> $EXTERNAL_NET 80 (http.host; dotprefix; content:"blog.toddaas.com"; endswith; msg:"Allowed HTTP domain"; priority:1; sid:1; rev:1;)\ndrop tcp $HOME_NET any -> $EXTERNAL_NET 80 (msg:"Drop established non-HTTP to TCP:80"; flow: from_client,established; sid:2; priority:5; rev:1;)\ndrop tcp 10.0.0.0/16 any -> 10.0.0.0/16 22 (msg:"Drop SSH"; sid:3; priority:6; rev:1;)'
+          rulesString: 'pass tls $HOME_NET any -> $EXTERNAL_NET 443 (msg:\"Pass TLS\"; sid:100200; rev:147;)\npass tcp $HOME_NET any <> $EXTERNAL_NET 443 (flow:not_established; sid:200200; rev:147;)\npass udp $HOME_NET any <> $EXTERNAL_NET 123 (sid:300200; rev:147;)'
         }
       }
     });
