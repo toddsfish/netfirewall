@@ -42,7 +42,7 @@ class InspectionVpcStack extends cdk.NestedStack {
       ]
     });
 
-    // Create Network Firewall
+    // Create Network Firewall Strict Order
     const netFirewallPolicy = new networkfirewall.CfnFirewallPolicy(this, 'netFirewallPolicy', {
       firewallPolicy: {
         statelessDefaultActions: ['aws:forward_to_sfe'],
