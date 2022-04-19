@@ -52,7 +52,7 @@ class InspectionVpcStack extends cdk.NestedStack {
           ruleOrder: 'STRICT_ORDER'
         },
         // The stateful default action is optional, and is only valid when using the strict rule order.
-        statefulDefaultActions: ['aws:drop_established']
+        statefulDefaultActions: ['aws:aws:alert_established']
       },
       firewallPolicyName: 'netFirewallPolicy',
     });
@@ -63,7 +63,7 @@ class InspectionVpcStack extends cdk.NestedStack {
       capacity: 30000,
       ruleGroup: {
         rulesSource: {
-          rulesString: 'pass tls $HOME_NET any -> $EXTERNAL_NET 443 (msg:\"Pass TLS\"; sid:100200; rev:147;)\npass tcp $HOME_NET any <> $EXTERNAL_NET 443 (flow:not_established; sid:200200; rev:147;)\npass udp $HOME_NET any <> $EXTERNAL_NET 123 (sid:300200; rev:147;)'
+          rulesString: 'alert http $HOME_NET any -> $EXTERNAL_NET 80 (msg:\"alert HTTP\"; sid:100100; rev:147;)\nalert tls $HOME_NET any <> $EXTERNAL_NET 443 (msg:\"alert TLS\"; sid:100200; rev:147;)\npass http $HOME_NET any -> $EXTERNAL_NET 80 (http.host; dotprefix; content:".toddaas.com"; endswith; msg:"Whitelist HTTP Rule"; sid:100300; rev:147;)\npass http $HOME_NET any -> $EXTERNAL_NET 443 (tls.sni; dotprefix; content:".toddaas.com"; endswith; msg:"Whitelist TLS Rule"; sid:100300; rev:147;)'
         },
         statefulRuleOptions: {
           ruleOrder: 'STRICT_ORDER'
